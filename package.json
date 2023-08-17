@@ -1,0 +1,27 @@
+{
+  "name": "js101",
+  "version": "1.0.0",
+  "description": "My Launch School from the JavaScript course work from JS101.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pablocerquera/JS101.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pablocerquera/JS101/issues"
+  },
+  "homepage": "https://github.com/pablocerquera/JS101#readme",
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.12.1",
+    "eslint-cli": "^1.1.1"
+  },
+  "dependencies": {
+    "readline-sync": "^1.4.10"
+  }
+}
