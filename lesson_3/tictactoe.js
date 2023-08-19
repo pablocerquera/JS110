@@ -134,7 +134,6 @@ function computerChoosesSquare(board) {
   board[square] = COMPUTER_MARKER;
 }
 
-
 if (howManyPlayers === 1) {
   //program starts
   while(true) {
@@ -164,7 +163,6 @@ if (howManyPlayers === 1) {
 }
   prompt('Thank you for playing my game.');
   //program ends 
-
 
 } else if (howManyPlayers === 2) {
   // program starts
@@ -202,4 +200,3 @@ if (howManyPlayers === 1) {
   //loop ends
   prompt('Thank you for playing my game.');
 }
-
