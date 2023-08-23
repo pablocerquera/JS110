@@ -6,17 +6,31 @@ const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
   [1, 5, 9], [3, 5, 7],
   [1, 4, 7], [2, 5, 8], [3, 6, 9]
-]
+];
 let board = initializeBoard();
 
-prompt('How many players will be playing')
+
+prompt('How many players will be playing');
 let howManyPlayers = Number(rl.question().trim());
 
 function prompt(msg) {
   console.log(`=> ${msg}`);
 }
 
-function displayBoard(board) {
+function joinOr(arr, seperation = ', ', conj = 'or') {
+  if (arr.length < 2) {
+    return arr.join();
+  } else if ( arr.length === 2) {
+    return arr.join(` ${conj} `);
+  } else {
+    let last = arr.slice(arr.length - 1);
+    last.unshift(conj);
+    arr.pop();
+    return arr.join(seperation) + seperation + last.join(' ');
+  }
+}
+
+function displayBoard(board, scoreObj) {
   console.clear();
   if (howManyPlayers === 2) {
     console.log(`Player 1 is ${HUMAN_MARKER} Player 2 is ${COMPUTER_MARKER}`);
@@ -35,6 +49,8 @@ function displayBoard(board) {
   console.log(`  ${board['7']}  |  ${board['8']}  |  ${board['9']}`);
   console.log('     |     |');
   console.log('');
+  prompt(displayScore(scoreObj));
+
 }
 
 function initializeBoard() {
@@ -59,7 +75,7 @@ function someoneWon(board) {
   return !!detectWinner(board);
 }
 
-function detectWinner() {
+function detectWinner(board) {
   if (howManyPlayers === 1) {
     for (let line = 0; line < WINNING_LINES.length; line++) {
       let [sq1, sq2, sq3] = WINNING_LINES[line];
@@ -77,11 +93,11 @@ function detectWinner() {
       ) {
         return 'Computer';
       }
-    } 
+    }
     return null;
   } else if (howManyPlayers === 2) {
-      for (let line = 0; line < WINNING_LINES.length; line++) {
-        let [sq1, sq2, sq3] = WINNING_LINES[line];
+    for (let line = 0; line < WINNING_LINES.length; line++) {
+      let [sq1, sq2, sq3] = WINNING_LINES[line];
 
       if (
         board[sq1] === HUMAN_MARKER &&
@@ -98,14 +114,14 @@ function detectWinner() {
       }
     }
     return null;
-  }    
+  }
 }
 
 function playerOneChoosesSquare(board) {
   let square;
 
   while (true) {
-    prompt(`Player 1 choose a square ${emptySquares(board).join(', ')}: `);
+    prompt(`Player 1 choose a square ${joinOr(emptySquares(board))}: `);
     square = rl.question().trim();
     if (emptySquares(board).includes(square)) break;
 
@@ -114,11 +130,11 @@ function playerOneChoosesSquare(board) {
   board[square] = HUMAN_MARKER;
 }
 
-function playertwoChoosesSquare(board) {
+function playerTwoChoosesSquare(board) {
   let square;
 
   while (true) {
-    prompt(`Player 2 choose a square ${emptySquares(board).join(', ')}: `);
+    prompt(`Player 2 choose a square ${joinOr(emptySquares(board))}: `);
     square = rl.question().trim();
     if (emptySquares(board).includes(square)) break;
 
@@ -127,76 +143,126 @@ function playertwoChoosesSquare(board) {
   board[square] = COMPUTER_MARKER;
 }
 
-function computerChoosesSquare(board) {
-  let randomIndex = Math.floor(Math.random() * emptySquares(board).length);
+function findVulnerableSquare(line, board, marker) {
+  let marksInLine = line.map(square => board[square]);
 
-  let square = emptySquares(board)[randomIndex];
+  if (marksInLine.filter(val => val === marker).length === 2) {
+    let unusedSquare = line.find(square => board[square] === INITIAL_MARKER);
+    if (unusedSquare !== undefined) {
+      return unusedSquare;
+    }
+  }
+  return null;
+}
+
+function computerChoosesSquare(board) {
+  let square;
+
+  for (let index = 0; index < WINNING_LINES.length; index++) {
+    let line = WINNING_LINES[index];
+    square = findVulnerableSquare(line, board, COMPUTER_MARKER);
+    if (square) break;
+  }
+
+  if (!square) {
+    for (let index = 0; index < WINNING_LINES.length; index++) {
+      let line = WINNING_LINES[index];
+      square = findVulnerableSquare(line, board, HUMAN_MARKER);
+      if (square) break;
+    }
+  }
+  if (!square && board['5'] === INITIAL_MARKER) {
+    square = 5;
+  }
+
+  if (!square) {
+    let randomIndex = Math.floor(Math.random() * emptySquares(board).length);
+    square = emptySquares(board)[randomIndex];
+  }
   board[square] = COMPUTER_MARKER;
+}
+
+function incrementScore(player, scoreObj) {
+  if (player === 'Human person' || player === 'Player 1') {
+    scoreObj.x += 1;
+  } else if (player === 'Computer' || player === 'Player 2') {
+    scoreObj.o += 1;
+  }
+}
+
+function displayScore(scoreObj) {
+  return `X's score is ${scoreObj.x} \n   O's score is ${scoreObj.o}`;
 }
 
 if (howManyPlayers === 1) {
   //program starts
-  while(true) {
-    board = initializeBoard()
-  
+  while (true) {
+    const scoreObj = { x: 0, o: 0 };
+
     while (true) {
-      displayBoard(board);
+      board = initializeBoard();
+      while (true) {
+        displayBoard(board, scoreObj);
 
-      playerOneChoosesSquare(board);
-      if (someoneWon(board) || boardFull(board)) break;
+        playerOneChoosesSquare(board);
+        if (someoneWon(board) || boardFull(board)) break;
 
-      computerChoosesSquare(board);
-      if (someoneWon(board) || boardFull(board)) break;
+        computerChoosesSquare(board);
+        if (someoneWon(board) || boardFull(board)) break;
+      }
+      incrementScore(detectWinner(board), scoreObj);
+
+      displayBoard(board, scoreObj);
+      if (someoneWon(board)) {
+        prompt(`${detectWinner(board)} wins!`);
+      } else {
+        prompt("It's a TIE!!!");
+      }
+      if (scoreObj.x === 3 || scoreObj.o === 3) break;
     }
-
-    displayBoard(board);
-
-
-    if (someoneWon(board)) {
-      prompt(`${detectWinner(board)} wins!`);
-    } else {
-      prompt("It's a TIE!!!");
-    }
-    prompt('Would you like to play again? (y/n)')
+    prompt('Would you like to play again? (y/n)');
     let answer = rl.question().toLowerCase()[0];
     if (answer !== 'y') break;
-}
+  }
   prompt('Thank you for playing my game.');
-  //program ends 
+  //program ends
 
-} else if (howManyPlayers === 2) {
+}
+
+if (howManyPlayers === 2) {
   // program starts
   while (true) {
-    board = initializeBoard();
-  
+    const scoreObj = { x: 0, o: 0 };
+
     while (true) {
+      board = initializeBoard();
+      while (true) {
+        displayBoard(board, scoreObj);
+        playerOneChoosesSquare(board);
+        if (someoneWon(board) || boardFull(board)) break;
+        displayBoard(board, scoreObj);
 
-      displayBoard(board);
+        playerTwoChoosesSquare(board);
+        displayBoard(board, scoreObj);
+
+        if (someoneWon(board) || boardFull(board)) break;
+      }
+
+      incrementScore(detectWinner(board), scoreObj);
 
 
-      playerOneChoosesSquare(board);
-      if (someoneWon(board) || boardFull(board)) break;
-      displayBoard(board);
-
-      playertwoChoosesSquare(board);
-      displayBoard(board);
-
-
-      if (someoneWon(board) || boardFull(board)) break;
+      displayBoard(board, scoreObj);
+      if (someoneWon(board)) {
+        prompt(`${detectWinner(board)} wins!`);
+      } else {
+        prompt("It's a TIE!!!");
+      }
+      if (scoreObj.x === 3 || scoreObj.o === 3) break;
     }
-
-    displayBoard(board);
-
-    if (someoneWon(board)) {
-      prompt(`${detectWinner(board)} wins!`);
-    } else {
-      prompt("It's a TIE!!!");
-    }
-
-    prompt('Would you like to play again? (y/n)')
+    prompt('Would you like to play again? (y/n)');
     let answer = rl.question().toLowerCase()[0];
     if (answer !== 'y') break;
-  } 
+  }
   //loop ends
   prompt('Thank you for playing my game.');
 }

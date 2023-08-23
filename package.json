@@ -1,7 +1,7 @@
 {
-  "name": "js101",
+  "name": "js110",
   "version": "1.0.0",
-  "description": "My Launch School from the JavaScript course work from JS101.",
+  "description": "My Launch School from the JavaScript course work from JS110.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
