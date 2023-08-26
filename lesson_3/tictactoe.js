@@ -194,20 +194,64 @@ function displayScore(scoreObj) {
   return `X's score is ${scoreObj.x} \n   O's score is ${scoreObj.o}`;
 }
 
+function playAgain() {
+  let response = true;
+  prompt('Would you like to play again? (y/n)');
+  while (true) {
+    let answer = rl.question().toLowerCase();
+    if (answer === 'yes' || answer[0] === 'y') {
+      response = true;
+      break;
+    }
+    if (answer === 'no' || answer[0] === 'n') {
+      response = false;
+      break;
+    }
+    if (answer !== 'yes' || answer !== 'no') {
+      prompt("Please answer 'yes' or 'no'.");
+    }
+  }
+  return response;
+}
+
+function chooseSquare(board, currentPlayer) {
+  let player;
+
+  //debugger;
+
+  if (currentPlayer === 0) {
+    player = playerOneChoosesSquare(board);
+  } else if (currentPlayer === 1) {
+    if (howManyPlayers === 1) {
+      player = computerChoosesSquare(board);
+    } else if (howManyPlayers === 2) {
+      player = playerTwoChoosesSquare(board);
+    }
+  }
+  return player;
+}
+function alternatePlayer(currentPlayer) {
+  if (currentPlayer === 0) {
+    currentPlayer += 1;
+    return currentPlayer;
+  } else {
+    currentPlayer -= 1;
+    return currentPlayer;
+  }
+}
+
 if (howManyPlayers === 1) {
   //program starts
   while (true) {
     const scoreObj = { x: 0, o: 0 };
+    let currentPlayer = Math.floor(Math.random() * 1);
 
     while (true) {
       board = initializeBoard();
       while (true) {
         displayBoard(board, scoreObj);
-
-        playerOneChoosesSquare(board);
-        if (someoneWon(board) || boardFull(board)) break;
-
-        computerChoosesSquare(board);
+        chooseSquare(board, currentPlayer);
+        currentPlayer = alternatePlayer(currentPlayer);
         if (someoneWon(board) || boardFull(board)) break;
       }
       incrementScore(detectWinner(board), scoreObj);
@@ -221,8 +265,15 @@ if (howManyPlayers === 1) {
       if (scoreObj.x === 3 || scoreObj.o === 3) break;
     }
     prompt('Would you like to play again? (y/n)');
-    let answer = rl.question().toLowerCase()[0];
-    if (answer !== 'y') break;
+    let answer = rl.question().toLowerCase();
+    if (answer === 'yes' || answer[0] === 'y') {
+      continue;
+    } else if (answer === 'no' || answer[0] === 'n') {
+      break;
+    } else {
+      prompt("Please answer 'yes' or 'no'.");
+      continue;
+    }
   }
   prompt('Thank you for playing my game.');
   //program ends
@@ -233,18 +284,15 @@ if (howManyPlayers === 2) {
   // program starts
   while (true) {
     const scoreObj = { x: 0, o: 0 };
+    let currentPlayer = Math.floor(Math.random() * 1);
+
 
     while (true) {
       board = initializeBoard();
       while (true) {
         displayBoard(board, scoreObj);
-        playerOneChoosesSquare(board);
-        if (someoneWon(board) || boardFull(board)) break;
-        displayBoard(board, scoreObj);
-
-        playerTwoChoosesSquare(board);
-        displayBoard(board, scoreObj);
-
+        chooseSquare(board, currentPlayer);
+        currentPlayer = alternatePlayer(currentPlayer);
         if (someoneWon(board) || boardFull(board)) break;
       }
 
@@ -259,9 +307,8 @@ if (howManyPlayers === 2) {
       }
       if (scoreObj.x === 3 || scoreObj.o === 3) break;
     }
-    prompt('Would you like to play again? (y/n)');
-    let answer = rl.question().toLowerCase()[0];
-    if (answer !== 'y') break;
+    let response = playAgain();
+    if (response === false) break;
   }
   //loop ends
   prompt('Thank you for playing my game.');
