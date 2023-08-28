@@ -45,7 +45,7 @@ function total(cards) {
 }
 
 function busted(cards) {
-  return total(cards) >= 21;
+  return total(cards) > 21;
 }
 
 function dealToPlayer(fullDeck) {
@@ -89,75 +89,107 @@ function justTheValues(array) {
   return array.map(cards => cards[1]).join(', ');
 }
 
+function playAgain() {
+  while (true) {
+    prompt("Would you like to play again?");
+    let answer = rl.question().toLowerCase();
+    if (answer === 'yes') {
+      return true;
+    } else if (answer === 'no') {
+      return false;
+    } else {
+      prompt('We need a yes or no answer.');
+    }
+  }
+}
+
 function detectWinner(player, dealer) {
   let playerDistance = 21 - total(player);
   let dealerDistance = 21 - total(dealer);
 
-  if (playerDistance > 0) {
-    if (playerDistance < dealerDistance) {
-      return 'You win!!!';
-    } else if (playerDistance > dealerDistance) {
+  switch (true) {
+    case busted(DEALERS_HAND):
+      return 'You Win!!!';
+    case busted(PLAYERS_HAND):
       return 'Dealer wins!!!';
-    } else {
-      return 'ITS A TIE!!!';
-    }
-  } else if (playerDistance < 0) {
-    if (playerDistance > dealerDistance) {
-      return 'You win!!!';
-    } else if (playerDistance < dealerDistance) {
+    case playerDistance < dealerDistance:
+      return 'You Win!!!';
+    case playerDistance > dealerDistance:
       return 'Dealer wins!!!';
-    } else {
+    default:
       return 'ITS A TIE!!!';
-    }
   }
+
+  // if (playerDistance > 0) {
+  //   if (playerDistance < dealerDistance) {
+  //     return 'You win!!!';
+  //   } else if (playerDistance > dealerDistance) {
+  //     return 'Dealer wins!!!';
+  //   } else {
+  //     return 'ITS A TIE!!!';
+  //   }
+  // } else if (playerDistance < 0) {
+  //   if (playerDistance > dealerDistance) {
+  //     return 'You win!!!';
+  //   } else if (playerDistance < dealerDistance) {
+  //     return 'Dealer wins!!!';
+  //   } else {
+  //     return 'ITS A TIE!!!';
+  //   }
+  // }
 }
 
-
-// Main Loop
+// PLAY AGAIN LOOP
 while (true) {
   console.clear();
-  shuffle(FULL_DECK);
   let fullDeck = FULL_DECK.slice();
   PLAYERS_HAND.length = 0;
   DEALERS_HAND.length = 0;
 
+  shuffle(FULL_DECK);
 
+  let dealerTotal = total(DEALERS_HAND);
+
+  // GAME LOOP
   while (true) {
+    console.log('===================================');
     let answer = playerHitOrStay(fullDeck);
+    dealerHitOrStay(fullDeck);
     if (busted(PLAYERS_HAND) || answer === 'stay') break;
     if (busted(DEALERS_HAND)) break;
     console.clear();
-    prompt(`This is your hand: ${justTheValues(PLAYERS_HAND)}`);
 
-    dealerHitOrStay(fullDeck);
+    prompt(`This is your hand: ${justTheValues(PLAYERS_HAND)} current total: ${playerTotal}`);
+    console.log('--------------------------------------------');
+    prompt(`This is the dealers card: ${justTheValues(DEALERS_HAND)[0]}`);// I want better readabilty for the user.
 
-    prompt(`This is the dealers card: ${justTheValues(DEALERS_HAND)[0]}`);
+    let playerTotal = total(PLAYERS_HAND);
+
   }
+  // GAME LOOP END
   console.clear();
+  // RESULTS
   if (busted(PLAYERS_HAND)) {
     prompt(`You busted, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
-
+    console.log('--------------------------------------------');
     prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
   } else if (busted(DEALERS_HAND)) {
     prompt(`Dealer busted, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
-
+    console.log('--------------------------------------------');
     prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
   } else {
     prompt(`You chose to stay, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
-
+    console.log('--------------------------------------------');
     prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
   }
-  prompt(detectWinner(PLAYERS_HAND, DEALERS_HAND));
 
-  prompt("Would you like to play again?");
-  let answer = rl.question().toLowerCase();
-  if (answer === 'yes') {
-    continue;
-  } else if (answer === 'no') {
-    console.clear();
-    prompt('Thank you for playing Twenty One!');
-    break;
-  } else {
-    prompt('We need a yes or no answer.');
-  }
+  console.log('-------------');
+  prompt(detectWinner(PLAYERS_HAND, DEALERS_HAND));
+  console.log('-------------');
+
+  let repeat = playAgain(); // not a huge fan of this solution I feel like there is a better way.
+  if (repeat === false) break;
 }
+
+console.clear();
+prompt('Thank you for playing Twenty One!');
