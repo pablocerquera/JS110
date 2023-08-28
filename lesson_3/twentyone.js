@@ -48,62 +48,116 @@ function busted(cards) {
   return total(cards) >= 21;
 }
 
-function dealToPlayer() {
+function dealToPlayer(fullDeck) {
 
-  PLAYERS_HAND.push(FULL_DECK[0]);
+  PLAYERS_HAND.push(fullDeck[0]);
 
-  FULL_DECK.shift();
+  fullDeck.shift();
 
   return PLAYERS_HAND;
 }
 
-function dealToDealer() {
-  DEALERS_HAND.push(FULL_DECK[0]);
+function dealToDealer(fullDeck) {
+  DEALERS_HAND.push(fullDeck[0]);
 
-  FULL_DECK.shift();
+  fullDeck.shift();
 
   return DEALERS_HAND;
 }
 
-function playerHitOrStay() {
+function playerHitOrStay(fullDeck) {
   while (true) {
     prompt("Would you like to 'Hit' or 'Stay'.");
     let hitOrStay = rl.question().toLowerCase();
     if (hitOrStay === 'stay') {
       return 'stay';
     } else if (hitOrStay === 'hit') {
-      return dealToPlayer();
+      return dealToPlayer(fullDeck);
     }
   }
 }
 
-function dealerHitOrStay() {
+function dealerHitOrStay(fullDeck) {
   if (DEALERS_HAND.length === 0) {
-    dealToDealer();
+    dealToDealer(fullDeck);
   } else if (total(DEALERS_HAND) <= 15) {
-    dealToDealer();
+    dealToDealer(fullDeck);
   }
 }
 
 function justTheValues(array) {
-  return array.map(cards => cards[1]);
+  return array.map(cards => cards[1]).join(', ');
+}
+
+function detectWinner(player, dealer) {
+  let playerDistance = 21 - total(player);
+  let dealerDistance = 21 - total(dealer);
+
+  if (playerDistance > 0) {
+    if (playerDistance < dealerDistance) {
+      return 'You win!!!';
+    } else if (playerDistance > dealerDistance) {
+      return 'Dealer wins!!!';
+    } else {
+      return 'ITS A TIE!!!';
+    }
+  } else if (playerDistance < 0) {
+    if (playerDistance > dealerDistance) {
+      return 'You win!!!';
+    } else if (playerDistance < dealerDistance) {
+      return 'Dealer wins!!!';
+    } else {
+      return 'ITS A TIE!!!';
+    }
+  }
 }
 
 
 // Main Loop
 while (true) {
+  console.clear();
   shuffle(FULL_DECK);
-  let answer = playerHitOrStay();
-  if (busted(PLAYERS_HAND) || answer === 'stay') break;
-  prompt(`This is your hand: ${justTheValues(PLAYERS_HAND)}`);
-  dealerHitOrStay();
-  prompt(`This is the Dealers card: ${justTheValues(DEALERS_HAND)[0]}`);
-}
+  let fullDeck = FULL_DECK.slice();
+  PLAYERS_HAND.length = 0;
+  DEALERS_HAND.length = 0;
 
-if (busted(PLAYERS_HAND)) {
-  prompt(`you lost because of you busted your total was: ${total(PLAYERS_HAND)}`);
-  prompt(`The dealers total: ${total(DEALERS_HAND)}`);
-} else {
-  prompt(`You chose to stay! Your total: ${total(PLAYERS_HAND)} the dealers total: ${total(DEALERS_HAND)}`);
-}
 
+  while (true) {
+    let answer = playerHitOrStay(fullDeck);
+    if (busted(PLAYERS_HAND) || answer === 'stay') break;
+    if (busted(DEALERS_HAND)) break;
+    console.clear();
+    prompt(`This is your hand: ${justTheValues(PLAYERS_HAND)}`);
+
+    dealerHitOrStay(fullDeck);
+
+    prompt(`This is the dealers card: ${justTheValues(DEALERS_HAND)[0]}`);
+  }
+  console.clear();
+  if (busted(PLAYERS_HAND)) {
+    prompt(`You busted, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
+
+    prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
+  } else if (busted(DEALERS_HAND)) {
+    prompt(`Dealer busted, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
+
+    prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
+  } else {
+    prompt(`You chose to stay, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
+
+    prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
+  }
+  prompt(detectWinner(PLAYERS_HAND, DEALERS_HAND));
+
+  prompt("Would you like to play again?");
+  let answer = rl.question().toLowerCase();
+  if (answer === 'yes') {
+    continue;
+  } else if (answer === 'no') {
+    console.clear();
+    prompt('Thank you for playing Twenty One!');
+    break;
+  } else {
+    prompt('We need a yes or no answer.');
+  }
+}
