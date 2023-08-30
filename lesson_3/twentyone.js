@@ -88,7 +88,7 @@ function dealerHitOrStay(dealerHand, fullDeck) {
 }
 
 function cardValues(array) {
-  return array.map(cards => cards[1]).join(', ');
+  return array.map(cards => cards[1]);
 }
 
 function playAgain() {
@@ -137,8 +137,8 @@ function incrementScore(winner, score) {
 }
 
 function displayResults(playerHand, dealerHand, playerTotal, dealerTotal) {
-  const playerCardValues = cardValues(playerHand);
-  const dealerCardValues = cardValues(dealerHand);
+  const playerCardValues = cardValues(playerHand).join(', ');
+  const dealerCardValues = cardValues(dealerHand).join(', ');
   const dealerBusted = busted(dealerTotal);
   const playerHandMsg = `your hand: ${color.brightBlue(playerCardValues)} your total was: ${color.brightBlue(playerTotal)}`;
   const dealersHandMsg = `The dealers hand: ${color.brightGreen(dealerCardValues)} and total: ${color.brightGreen(dealerTotal)}`;
@@ -203,9 +203,9 @@ while (true) {
 
       console.clear();
       console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.p)} Dealer: ${color.green(SCORE_OBJ.d)}`);
-      prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand))} current total: ${color.brightBlue(playerTotal)}`);
+      prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand).join(', '))} current total: ${color.brightBlue(playerTotal)}`);
       console.log(LARGE_DIVIDER);
-      prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);// I want better readabilty for the user.
+      prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);
     }
     // GAME LOOP END
     console.clear();
