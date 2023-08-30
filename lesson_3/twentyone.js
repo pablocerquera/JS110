@@ -1,6 +1,5 @@
 const rl = require('readline-sync');
-const PLAYERS_HAND = [];
-const DEALERS_HAND = [];
+const color = require('colors/safe');
 const FULL_DECK = [['H', '2'], ['H', '3'], ['H', '4'], ['H', '5'], ['H', '6'], ['H', '7'],
   ['H', '8'], ['H', '9'],['H', '10'], ['H', 'J'], ['H', 'Q'], ['H', 'K'], ['H', 'A'],
   ['S', '2'], ['S', '3'], ['S', '4'], ['S', '5'], ['S', '6'], ['S', '7'],
@@ -9,6 +8,13 @@ const FULL_DECK = [['H', '2'], ['H', '3'], ['H', '4'], ['H', '5'], ['H', '6'], [
   ['D', '8'], ['D', '9'],['D', '10'], ['D', 'J'], ['D', 'Q'], ['D', 'K'], ['D', 'A'],
   ['C', '2'], ['C', '3'], ['C', '4'], ['C', '5'], ['C', '6'], ['C', '7'],
   ['C', '8'], ['C', '9'],['C', '10'], ['C', 'J'], ['C', 'Q'], ['C', 'K'], ['C', 'A']];
+const HEADER_DIVIDER = '===================================';
+const LARGE_DIVIDER = '--------------------------------------------';
+const SMALL_DIVIDER = '-------------';
+const WINNING_NUMBER = 21;
+const MATCH_LIMIT = 3;
+const FACE_CARD_VALUE = 10;
+
 
 function prompt(msg) {
   return console.log(`=> ${msg}`);
@@ -19,6 +25,7 @@ function shuffle(array) {
     let otherIndex = Math.floor(Math.random() * (index + 1)); // 0 to index
     [array[index], array[otherIndex]] = [array[otherIndex], array[index]]; // swap elements
   }
+  return array;
 }
 
 function total(cards) {
@@ -27,65 +34,60 @@ function total(cards) {
 
   let sum = 0;
   values.forEach(value => {
-    if (value === "A") {
+    if (value === 'A') {
       sum += 11;
     } else if (['J', 'Q', 'K'].includes(value)) {
-      sum += 10;
+      sum += FACE_CARD_VALUE;
     } else {
       sum += Number(value);
     }
   });
 
   // correct for Aces
-  values.filter(value => value === "A").forEach(_ => {
+  values.filter(value => value === 'A').forEach(_ => {
     if (sum > 21) sum -= 10;
   });
 
   return sum;
 }
 
-function busted(cards) {
-  return total(cards) > 21;
+function busted(total) {
+  return total > WINNING_NUMBER;
 }
 
-function dealToPlayer(fullDeck) {
+function dealToPlayer(playerHand, fullDeck) {
+  playerHand.push(fullDeck[0]);
+}
 
-  PLAYERS_HAND.push(fullDeck[0]);
+function dealToDealer(dealerHand, fullDeck) {
+  dealerHand.push(fullDeck[0]);
+}
 
+function discard(fullDeck) {
   fullDeck.shift();
-
-  return PLAYERS_HAND;
 }
 
-function dealToDealer(fullDeck) {
-  DEALERS_HAND.push(fullDeck[0]);
-
-  fullDeck.shift();
-
-  return DEALERS_HAND;
-}
-
-function playerHitOrStay(fullDeck) {
+function playerHitOrStay() {
   while (true) {
-    prompt("Would you like to 'Hit' or 'Stay'.");
+    prompt(`Would you like to ${color.brightBlue('(H)it')} or ${color.brightRed('(S)tay')}.`);
     let hitOrStay = rl.question().toLowerCase();
-    if (hitOrStay === 'stay') {
+    if (hitOrStay === 'stay' || hitOrStay === 's') {
       return 'stay';
-    } else if (hitOrStay === 'hit') {
-      return dealToPlayer(fullDeck);
+    } else if (hitOrStay === 'hit' || hitOrStay === 'h') {
+      return 'hit';
     }
   }
 }
 
-function dealerHitOrStay(fullDeck) {
-  if (DEALERS_HAND.length === 0) {
-    dealToDealer(fullDeck);
-  } else if (total(DEALERS_HAND) <= 15) {
-    dealToDealer(fullDeck);
+function dealerHitOrStay(dealerHand, fullDeck) {
+  if (dealerHand.length === 0) {
+    dealToDealer(dealerHand, fullDeck);
+  } else if (total(dealerHand) <= 15) {
+    dealToDealer(dealerHand, fullDeck);
   }
 }
 
-function justTheValues(array) {
+function cardValues(array) {
   return array.map(cards => cards[1]).join(', ');
 }
 
@@ -93,24 +95,24 @@ function playAgain() {
   while (true) {
     prompt("Would you like to play again?");
     let answer = rl.question().toLowerCase();
-    if (answer === 'yes') {
+    if (answer === 'yes' || answer === 'y') {
       return true;
-    } else if (answer === 'no') {
+    } else if (answer === 'no' || answer === 'n') {
       return false;
     } else {
-      prompt('We need a yes or no answer.');
+      prompt('We need a (y)es or (n)o answer.');
     }
   }
 }
 
-function detectWinner(player, dealer) {
-  let playerDistance = 21 - total(player);
-  let dealerDistance = 21 - total(dealer);
+function detectWinner(playerTotal, dealerTotal) {
+  let playerDistance = WINNING_NUMBER - playerTotal;
+  let dealerDistance = WINNING_NUMBER - dealerTotal;
 
   switch (true) {
-    case busted(DEALERS_HAND):
+    case busted(dealerTotal):
       return 'You Win!!!';
-    case busted(PLAYERS_HAND):
+    case busted(playerTotal):
       return 'Dealer wins!!!';
     case playerDistance < dealerDistance:
       return 'You Win!!!';
@@ -119,77 +121,107 @@ function detectWinner(player, dealer) {
     default:
       return 'ITS A TIE!!!';
   }
+}
 
-  // if (playerDistance > 0) {
-  //   if (playerDistance < dealerDistance) {
-  //     return 'You win!!!';
-  //   } else if (playerDistance > dealerDistance) {
-  //     return 'Dealer wins!!!';
-  //   } else {
-  //     return 'ITS A TIE!!!';
-  //   }
-  // } else if (playerDistance < 0) {
-  //   if (playerDistance > dealerDistance) {
-  //     return 'You win!!!';
-  //   } else if (playerDistance < dealerDistance) {
-  //     return 'Dealer wins!!!';
-  //   } else {
-  //     return 'ITS A TIE!!!';
-  //   }
-  // }
+function incrementScore(winner, score) {
+  switch (true) {
+    case winner === 'You Win!!!':
+      score.p += 1;
+      break;
+    case winner === 'Dealer wins!!!':
+      score.d += 1;
+      break;
+    case winner === 'ITS A TIE!!!':
+      break;
+  }
+}
+
+function displayResults(playerHand, dealerHand, playerTotal, dealerTotal) {
+  const playerCardValues = cardValues(playerHand);
+  const dealerCardValues = cardValues(dealerHand);
+  const dealerBusted = busted(dealerTotal);
+  const playerHandMsg = `your hand: ${color.brightBlue(playerCardValues)} your total was: ${color.brightBlue(playerTotal)}`;
+  const dealersHandMsg = `The dealers hand: ${color.brightGreen(dealerCardValues)} and total: ${color.brightGreen(dealerTotal)}`;
+  const bustedMsg = `${dealerBusted ? 'Dealer' : 'You'} busted`;
+
+  if (busted(playerTotal)) {
+    prompt(`${bustedMsg}, ${playerHandMsg}`);
+    console.log(LARGE_DIVIDER);
+    prompt(dealersHandMsg);
+  } else if (dealerBusted) {
+    prompt(`${bustedMsg}, ${playerHandMsg}`);
+    console.log(LARGE_DIVIDER);
+    prompt(dealersHandMsg);
+  } else {
+    prompt(`You chose to stay, ${playerHandMsg}`);
+    console.log(LARGE_DIVIDER);
+    prompt(dealersHandMsg);
+  }
+}
+
+function seriesWinner(score) {
+  if (score.p === MATCH_LIMIT) {
+    return color.blue.bold('You won the series!! Congratulations!');
+  } else if ( score.d === MATCH_LIMIT) {
+    return color.yellow.bold("You lost the series... Maybe practice and next time you'll do better.");
+  } else {
+    return 'confusion.';
+  }
 }
 
 // PLAY AGAIN LOOP
 while (true) {
   console.clear();
-  let fullDeck = FULL_DECK.slice();
-  PLAYERS_HAND.length = 0;
-  DEALERS_HAND.length = 0;
+  const SCORE_OBJ = {p: 0, d: 0};
+  let playerHand = [];
+  let dealerHand = [];
+  let playerTotal = total(playerHand);
+  let dealerTotal = total(dealerHand);
 
-  shuffle(FULL_DECK);
-
-  let dealerTotal = total(DEALERS_HAND);
-
-  // GAME LOOP
   while (true) {
-    console.log('===================================');
-    let answer = playerHitOrStay(fullDeck);
-    dealerHitOrStay(fullDeck);
-    if (busted(PLAYERS_HAND) || answer === 'stay') break;
-    if (busted(DEALERS_HAND)) break;
+    let fullDeck = shuffle(FULL_DECK.slice()); // sliced to make a shallow copy.
+    playerHand = [];
+    dealerHand = [];
+
+    playerTotal = total(playerHand);
+    dealerTotal = total(dealerHand);
+    // GAME LOOP
+    while (true) {
+      console.log(HEADER_DIVIDER);
+      let answer = playerHitOrStay();
+      if (answer === 'hit') {
+        dealToPlayer(playerHand, fullDeck);
+      } else if (answer === 'stay') break;
+
+      discard(fullDeck);
+      dealerHitOrStay(dealerHand, fullDeck);
+      discard(fullDeck);
+      playerTotal = total(playerHand);
+      dealerTotal = total(dealerHand);
+
+      if (busted(playerTotal) || busted(dealerTotal)) break;
+
+      console.clear();
+      console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.p)} Dealer: ${color.green(SCORE_OBJ.d)}`);
+      prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand))} current total: ${color.brightBlue(playerTotal)}`);
+      console.log(LARGE_DIVIDER);
+      prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);// I want better readabilty for the user.
+    }
+    // GAME LOOP END
     console.clear();
+    // RESULTS
+    displayResults(playerHand, dealerHand, playerTotal, dealerTotal);
+    prompt(color.white.italic(detectWinner(playerTotal, dealerTotal)));
+    incrementScore(detectWinner(playerTotal, dealerTotal), SCORE_OBJ);
 
-    prompt(`This is your hand: ${justTheValues(PLAYERS_HAND)} current total: ${playerTotal}`);
-    console.log('--------------------------------------------');
-    prompt(`This is the dealers card: ${justTheValues(DEALERS_HAND)[0]}`);// I want better readabilty for the user.
-
-    let playerTotal = total(PLAYERS_HAND);
-
+    if (SCORE_OBJ.p === 3 || SCORE_OBJ.d === 3) break;
   }
-  // GAME LOOP END
-  console.clear();
-  // RESULTS
-  if (busted(PLAYERS_HAND)) {
-    prompt(`You busted, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
-    console.log('--------------------------------------------');
-    prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
-  } else if (busted(DEALERS_HAND)) {
-    prompt(`Dealer busted, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
-    console.log('--------------------------------------------');
-    prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
-  } else {
-    prompt(`You chose to stay, your hand: ${justTheValues(PLAYERS_HAND)} your total was: ${total(PLAYERS_HAND)}`);
-    console.log('--------------------------------------------');
-    prompt(`The dealers hand: ${justTheValues(DEALERS_HAND)} and total: ${total(DEALERS_HAND)}`);
-  }
+  console.log(SMALL_DIVIDER);
+  prompt(seriesWinner(SCORE_OBJ));
+  console.log(SMALL_DIVIDER);
 
-  console.log('-------------');
-  prompt(detectWinner(PLAYERS_HAND, DEALERS_HAND));
-  console.log('-------------');
-
-  let repeat = playAgain(); // not a huge fan of this solution I feel like there is a better way.
-  if (repeat === false) break;
+  if (playAgain() === false) break;
 }
 
 console.clear();
-prompt('Thank you for playing Twenty One!');
+prompt(color.rainbow('Thank you for playing Twenty One!'));
