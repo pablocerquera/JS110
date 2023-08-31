@@ -137,12 +137,12 @@ function incrementScore(winner, score) {
 }
 
 function displayResults(playerHand, dealerHand, playerTotal, dealerTotal) {
-  const playerCardValues = cardValues(playerHand).join(', ');
-  const dealerCardValues = cardValues(dealerHand).join(', ');
-  const dealerBusted = busted(dealerTotal);
-  const playerHandMsg = `your hand: ${color.brightBlue(playerCardValues)} your total was: ${color.brightBlue(playerTotal)}`;
-  const dealersHandMsg = `The dealers hand: ${color.brightGreen(dealerCardValues)} and total: ${color.brightGreen(dealerTotal)}`;
-  const bustedMsg = `${dealerBusted ? 'Dealer' : 'You'} busted`;
+  let playerCardValues = cardValues(playerHand).join(', ');
+  let dealerCardValues = cardValues(dealerHand).join(', ');
+  let dealerBusted = busted(dealerTotal);
+  let playerHandMsg = `your hand: ${color.brightBlue(playerCardValues)} your total was: ${color.brightBlue(playerTotal)}`;
+  let dealersHandMsg = `The dealers hand: ${color.brightGreen(dealerCardValues)} and total: ${color.brightGreen(dealerTotal)}`;
+  let bustedMsg = `${dealerBusted ? 'Dealer' : 'You'} busted`;
 
   if (busted(playerTotal)) {
     prompt(`${bustedMsg}, ${playerHandMsg}`);
