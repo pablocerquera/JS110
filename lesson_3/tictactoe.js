@@ -1,4 +1,5 @@
 const rl = require('readline-sync');
+const color = require('colors/safe');
 const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
@@ -121,7 +122,7 @@ function playerOneChoosesSquare(board) {
   let square;
 
   while (true) {
-    prompt(`Player 1 choose a square ${joinOr(emptySquares(board))}: `);
+    prompt(`Player 1 choose a square ${color.brightRed(joinOr(emptySquares(board)))}: `);
     square = rl.question().trim();
     if (emptySquares(board).includes(square)) break;
 
@@ -134,7 +135,7 @@ function playerTwoChoosesSquare(board) {
   let square;
 
   while (true) {
-    prompt(`Player 2 choose a square ${joinOr(emptySquares(board))}: `);
+    prompt(`Player 2 choose a square ${color.brightBlue(joinOr(emptySquares(board)))}: `);
     square = rl.question().trim();
     if (emptySquares(board).includes(square)) break;
 
@@ -191,27 +192,21 @@ function incrementScore(player, scoreObj) {
 }
 
 function displayScore(scoreObj) {
-  return `X's score is ${scoreObj.x} \n   O's score is ${scoreObj.o}`;
+  return `X's score is ${color.brightRed(scoreObj.x)} \n   O's score is ${color.brightBlue(scoreObj.o)}`;
 }
 
 function playAgain() {
-  let response = true;
   prompt('Would you like to play again? (y/n)');
   while (true) {
     let answer = rl.question().toLowerCase();
     if (answer === 'yes' || answer[0] === 'y') {
-      response = true;
-      break;
-    }
-    if (answer === 'no' || answer[0] === 'n') {
-      response = false;
-      break;
-    }
-    if (answer !== 'yes' || answer !== 'no') {
+      return true;
+    } else if (answer === 'no' || answer[0] === 'n') {
+      return false;
+    } else {
       prompt("Please answer 'yes' or 'no'.");
     }
   }
-  return response;
 }
 
 function chooseSquare(board, currentPlayer) {
@@ -241,7 +236,7 @@ function alternatePlayer(currentPlayer) {
 }
 
 if (howManyPlayers === 1) {
-  //program starts
+  // 1 player game starts
   while (true) {
     const scoreObj = { x: 0, o: 0 };
     let currentPlayer = Math.floor(Math.random() * 1);
@@ -258,30 +253,21 @@ if (howManyPlayers === 1) {
 
       displayBoard(board, scoreObj);
       if (someoneWon(board)) {
-        prompt(`${detectWinner(board)} wins!`);
+        prompt(`${color.brightGreen(detectWinner(board))} wins!`);
       } else {
         prompt("It's a TIE!!!");
       }
       if (scoreObj.x === 3 || scoreObj.o === 3) break;
     }
-    prompt('Would you like to play again? (y/n)');
-    let answer = rl.question().toLowerCase();
-    if (answer === 'yes' || answer[0] === 'y') {
-      continue;
-    } else if (answer === 'no' || answer[0] === 'n') {
-      break;
-    } else {
-      prompt("Please answer 'yes' or 'no'.");
-      continue;
-    }
-  }
+    if (playAgain() === false) break;
+  } 
+  // game loop ends
+  console.clear();
   prompt('Thank you for playing my game.');
-  //program ends
-
 }
 
 if (howManyPlayers === 2) {
-  // program starts
+  // 2 player game starts
   while (true) {
     const scoreObj = { x: 0, o: 0 };
     let currentPlayer = Math.floor(Math.random() * 1);
@@ -301,15 +287,15 @@ if (howManyPlayers === 2) {
 
       displayBoard(board, scoreObj);
       if (someoneWon(board)) {
-        prompt(`${detectWinner(board)} wins!`);
+        prompt(`${color.brightGreen(detectWinner(board))} wins!`);
       } else {
         prompt("It's a TIE!!!");
       }
       if (scoreObj.x === 3 || scoreObj.o === 3) break;
     }
-    let response = playAgain();
-    if (response === false) break;
+    if (playAgain() === false) break;
   }
-  //loop ends
+  // game loop ends
+  console.clear();
   prompt('Thank you for playing my game.');
 }
