@@ -98,7 +98,7 @@ function removeCard(fullDeck) {
   fullDeck.shift();
 }
 
-function playerHitOrStay(playerTotal) {
+function playerHitOrStay() {
   while (true) {
     prompt(`Would you like to ${color.brightBlue('(H)it')} or ${color.brightRed('(S)tay')}.`);
     let hitOrStay = rl.question().toLowerCase();
