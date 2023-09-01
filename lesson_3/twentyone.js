@@ -20,6 +20,10 @@ const JUST_H = 'h';
 const STAY = 'stay';
 const JUST_S = 's';
 const READY = 'ready';
+const YES = 'yes';
+const JUST_Y = 'y';
+const NO = 'no';
+const JUST_N = 'n';
 
 function gameWelcome() {
   prompt('Welcome to Twenty One!');
@@ -32,10 +36,10 @@ function playerReady() {
   prompt('Are you ready?');
   while (true) {
     let ready = rl.question().toLowerCase();
-    if (ready === READY || ready === 'yes' || ready === 'y') {
+    if (ready === READY || ready === YES || ready === 'y') {
       break;
     } else {
-      prompt("Whenever you are ready type 'ready' or 'yes'.");
+      prompt("Whenever you are ready type ready or (y)es.");
     }
   }
 }
@@ -127,9 +131,9 @@ function playAgain() {
   while (true) {
     prompt("Would you like to play again?");
     let answer = rl.question().toLowerCase();
-    if (answer === 'yes' || answer === 'y') {
+    if (answer === YES || answer === JUST_Y) {
       return true;
-    } else if (answer === 'no' || answer === 'n') {
+    } else if (answer === NO || answer === JUST_N) {
       return false;
     } else {
       prompt('We need a (y)es or (n)o answer.');
@@ -210,6 +214,45 @@ function seriesWinner(score) {
   }
 }
 
+function playersTurn(playerTotal, playerHand, dealerHand,
+  SCORE_OBJ, fullDeck) {
+  while (true) {
+    // PLAYER'S TURN
+    console.clear();
+    playerTotal = total(playerHand);
+
+    console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.player)} Dealer: ${color.green(SCORE_OBJ.dealer)}`);
+    prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand).join(', '))} current total: ${color.brightBlue(playerTotal)}`);
+    console.log(LARGE_DIVIDER);
+    prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);
+    console.log(HEADER_DIVIDER);
+    if (busted(playerTotal)) break;
+    let answer = playerHitOrStay(playerTotal);
+    if (answer === HIT) {
+      dealToPlayer(playerHand, fullDeck);
+      removeCard(fullDeck);
+    } else if (answer === STAY) break;
+  }
+  return playerTotal;
+}
+
+function dealersTurn(dealerHand, fullDeck, dealerTotal) {
+  while (true) {
+    // DEALER'S TURN
+    console.clear();
+    let answer = dealerHitOrStay(dealerHand, fullDeck);
+    if (answer === HIT) {
+      dealToDealer(dealerHand, fullDeck);
+      removeCard(fullDeck);
+    } else if (answer === STAY) break;
+
+    dealerTotal = total(dealerHand);
+
+    if (busted(dealerTotal)) break;
+  }
+  return dealerTotal;
+}
+
 // PLAY AGAIN LOOP
 while (true) {
   console.clear();
@@ -226,42 +269,19 @@ while (true) {
     initialDeal(playerHand, dealerHand, fullDeck);
     playerReady();
     // GAME LOOP
-    while (true) {
-      // PLAYER'S TURN
-      console.clear();
-      playerTotal = total(playerHand);
-      dealerTotal = total(dealerHand);
+    // PLAYER'S TURN
+    playerTotal = playersTurn(playerTotal, playerHand, dealerHand,
+      SCORE_OBJ, fullDeck);
 
-      console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.player)} Dealer: ${color.green(SCORE_OBJ.dealer)}`);
-      prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand).join(', '))} current total: ${color.brightBlue(playerTotal)}`);
-      console.log(LARGE_DIVIDER);
-      prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);
-      console.log(HEADER_DIVIDER);
-      if (busted(playerTotal)) break;
-      let answer = playerHitOrStay(playerTotal);
-      if (answer === HIT) {
-        dealToPlayer(playerHand, fullDeck);
-        removeCard(fullDeck);
-      } else if (answer === STAY) break;
-    }
     if (busted(playerTotal)) {
       SCORE_OBJ.dealer += 1;
       prompt('YOU BUSTED!');
+      if (SCORE_OBJ.player === 3 || SCORE_OBJ.dealer === 3) break;
       continue;
     }
-    while (true) {
-      // DEALER'S TURN
-      console.clear();
-      let answer = dealerHitOrStay(dealerHand, fullDeck);
-      if (answer === HIT) {
-        dealToDealer(dealerHand, fullDeck);
-        removeCard(fullDeck);
-      } else if (answer === STAY) break;
+    // DEALER'S TURN
+    dealerTotal = dealersTurn(dealerHand, fullDeck, dealerTotal);
 
-      dealerTotal = total(dealerHand);
-
-      if (busted(dealerTotal)) break;
-    }
     // GAME LOOP END
     console.clear();
     // RESULTS
