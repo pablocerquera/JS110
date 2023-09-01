@@ -14,7 +14,38 @@ const SMALL_DIVIDER = '-------------';
 const WINNING_NUMBER = 21;
 const MATCH_LIMIT = 3;
 const FACE_CARD_VALUE = 10;
+const CORRECTION_FOR_ACE = 10;
+const HIT = 'hit';
+const JUST_H = 'h';
+const STAY = 'stay';
+const JUST_S = 's';
+const READY = 'ready';
 
+function gameWelcome() {
+  prompt('Welcome to Twenty One!');
+  prompt(`The player closer to ${WINNING_NUMBER} wins.`);
+  prompt(`Ace: 1 or 11, Numbered cards: number on card, Face Cards: 10`);
+  prompt('Enjoy!!');
+}
+
+function playerReady() {
+  prompt('Are you ready?');
+  while (true) {
+    let ready = rl.question().toLowerCase();
+    if (ready === READY || ready === 'yes' || ready === 'y') {
+      break;
+    } else {
+      prompt("Whenever you are ready type 'ready' or 'yes'.");
+    }
+  }
+}
+
+function initialDeal(playerHand, dealerHand, fullDeck) {
+  playerHand.push(fullDeck[0]);
+  removeCard(fullDeck);
+  dealerHand.push(fullDeck[0]);
+  removeCard(fullDeck);
+}
 
 function prompt(msg) {
   return console.log(`=> ${msg}`);
@@ -45,7 +76,7 @@ function total(cards) {
 
   // correct for Aces
   values.filter(value => value === 'A').forEach(_ => {
-    if (sum > 21) sum -= 10;
+    if (sum > WINNING_NUMBER) sum -= CORRECTION_FOR_ACE;
   });
 
   return sum;
@@ -63,28 +94,28 @@ function dealToDealer(dealerHand, fullDeck) {
   dealerHand.push(fullDeck[0]);
 }
 
-function discard(fullDeck) {
+function removeCard(fullDeck) {
   fullDeck.shift();
 }
 
-function playerHitOrStay() {
+function playerHitOrStay(playerTotal) {
   while (true) {
     prompt(`Would you like to ${color.brightBlue('(H)it')} or ${color.brightRed('(S)tay')}.`);
     let hitOrStay = rl.question().toLowerCase();
-    if (hitOrStay === 'stay' || hitOrStay === 's') {
-      return 'stay';
-    } else if (hitOrStay === 'hit' || hitOrStay === 'h') {
-      return 'hit';
+    if (hitOrStay === STAY || hitOrStay === JUST_S || busted(playerTotal)) {
+      return STAY;
+    } else if (hitOrStay === HIT || hitOrStay === JUST_H) {
+      return HIT;
     }
   }
 }
 
-function dealerHitOrStay(dealerHand, fullDeck) {
+function dealerHitOrStay(dealerHand) {
   if (dealerHand.length === 0) {
-    dealToDealer(dealerHand, fullDeck);
-  } else if (total(dealerHand) <= 15) {
-    dealToDealer(dealerHand, fullDeck);
-  }
+    return HIT;
+  } else if (total(dealerHand) <= 17) {
+    return HIT;
+  } else return STAY;
 }
 
 function cardValues(array) {
@@ -118,18 +149,20 @@ function detectWinner(playerTotal, dealerTotal) {
       return 'You Win!!!';
     case playerDistance > dealerDistance:
       return 'Dealer wins!!!';
-    default:
+    case playerDistance === dealerDistance:
       return 'ITS A TIE!!!';
+    default:
+      return 'confusion.';
   }
 }
 
 function incrementScore(winner, score) {
   switch (true) {
     case winner === 'You Win!!!':
-      score.p += 1;
+      score.player += 1;
       break;
     case winner === 'Dealer wins!!!':
-      score.d += 1;
+      score.dealer += 1;
       break;
     case winner === 'ITS A TIE!!!':
       break;
@@ -141,28 +174,35 @@ function displayResults(playerHand, dealerHand, playerTotal, dealerTotal) {
   let dealerCardValues = cardValues(dealerHand).join(', ');
   let dealerBusted = busted(dealerTotal);
   let playerHandMsg = `your hand: ${color.brightBlue(playerCardValues)} your total was: ${color.brightBlue(playerTotal)}`;
-  let dealersHandMsg = `The dealers hand: ${color.brightGreen(dealerCardValues)} and total: ${color.brightGreen(dealerTotal)}`;
+  let dealerHandMsg = `The dealers hand: ${color.brightGreen(dealerCardValues)} and total: ${color.brightGreen(dealerTotal)}`;
   let bustedMsg = `${dealerBusted ? 'Dealer' : 'You'} busted`;
 
+  displayResultsHelper(playerHandMsg, dealerHandMsg, playerTotal,
+    bustedMsg, dealerBusted);
+
+}
+
+function displayResultsHelper(playerHandMsg, dealerHandMsg, playerTotal,
+  bustedMsg, dealerBusted) {
   if (busted(playerTotal)) {
     prompt(`${bustedMsg}, ${playerHandMsg}`);
     console.log(LARGE_DIVIDER);
-    prompt(dealersHandMsg);
+    prompt(dealerHandMsg);
   } else if (dealerBusted) {
     prompt(`${bustedMsg}, ${playerHandMsg}`);
     console.log(LARGE_DIVIDER);
-    prompt(dealersHandMsg);
+    prompt(dealerHandMsg);
   } else {
     prompt(`You chose to stay, ${playerHandMsg}`);
     console.log(LARGE_DIVIDER);
-    prompt(dealersHandMsg);
+    prompt(dealerHandMsg);
   }
 }
 
 function seriesWinner(score) {
-  if (score.p === MATCH_LIMIT) {
+  if (score.player === MATCH_LIMIT) {
     return color.blue.bold('You won the series!! Congratulations!');
-  } else if ( score.d === MATCH_LIMIT) {
+  } else if ( score.dealer === MATCH_LIMIT) {
     return color.yellow.bold("You lost the series... Maybe practice and next time you'll do better.");
   } else {
     return 'confusion.';
@@ -172,40 +212,48 @@ function seriesWinner(score) {
 // PLAY AGAIN LOOP
 while (true) {
   console.clear();
-  const SCORE_OBJ = {p: 0, d: 0};
-  let playerHand = [];
-  let dealerHand = [];
-  let playerTotal = total(playerHand);
-  let dealerTotal = total(dealerHand);
+  gameWelcome();
+  const SCORE_OBJ = {player: 0, dealer: 0};
 
   while (true) {
     let fullDeck = shuffle(FULL_DECK.slice()); // sliced to make a shallow copy.
-    playerHand = [];
-    dealerHand = [];
+    let playerHand = [];
+    let dealerHand = [];
+    let playerTotal = total(playerHand);
+    let dealerTotal = total(dealerHand);
 
-    playerTotal = total(playerHand);
-    dealerTotal = total(dealerHand);
+    initialDeal(playerHand, dealerHand, fullDeck);
+    playerReady();
     // GAME LOOP
     while (true) {
-      console.log(HEADER_DIVIDER);
-      let answer = playerHitOrStay();
-      if (answer === 'hit') {
-        dealToPlayer(playerHand, fullDeck);
-      } else if (answer === 'stay') break;
-
-      discard(fullDeck);
-      dealerHitOrStay(dealerHand, fullDeck);
-      discard(fullDeck);
+      // PLAYER'S TURN
+      console.clear();
       playerTotal = total(playerHand);
       dealerTotal = total(dealerHand);
 
-      if (busted(playerTotal) || busted(dealerTotal)) break;
-
-      console.clear();
-      console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.p)} Dealer: ${color.green(SCORE_OBJ.d)}`);
+      console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.player)} Dealer: ${color.green(SCORE_OBJ.dealer)}`);
       prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand).join(', '))} current total: ${color.brightBlue(playerTotal)}`);
       console.log(LARGE_DIVIDER);
       prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);
+      console.log(HEADER_DIVIDER);
+      let answer = playerHitOrStay(playerTotal);
+      if (answer === HIT) {
+        dealToPlayer(playerHand, fullDeck);
+        removeCard(fullDeck);
+      } else if (answer === STAY || busted(playerTotal)) break;
+    }
+    while (true) {
+      // DEALER'S TURN
+      console.clear();
+      let answer = dealerHitOrStay(dealerHand, fullDeck);
+      if (answer === HIT) {
+        dealToDealer(dealerHand, fullDeck);
+        removeCard(fullDeck);
+      } else if (answer === STAY) break;
+
+      dealerTotal = total(dealerHand);
+
+      if (busted(dealerTotal)) break;
     }
     // GAME LOOP END
     console.clear();
@@ -214,13 +262,13 @@ while (true) {
     prompt(color.white.italic(detectWinner(playerTotal, dealerTotal)));
     incrementScore(detectWinner(playerTotal, dealerTotal), SCORE_OBJ);
 
-    if (SCORE_OBJ.p === 3 || SCORE_OBJ.d === 3) break;
+    if (SCORE_OBJ.player === 3 || SCORE_OBJ.dealer === 3) break;
   }
   console.log(SMALL_DIVIDER);
   prompt(seriesWinner(SCORE_OBJ));
   console.log(SMALL_DIVIDER);
 
-  if (playAgain() === false) break;
+  if (!playAgain()) break;
 }
 
 console.clear();
