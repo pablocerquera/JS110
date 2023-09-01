@@ -15,6 +15,8 @@ const WINNING_NUMBER = 21;
 const MATCH_LIMIT = 3;
 const FACE_CARD_VALUE = 10;
 const CORRECTION_FOR_ACE = 10;
+const ACE_VALUE = 11;
+const DEALER_LIMIT = 17;
 const HIT = 'hit';
 const JUST_H = 'h';
 const STAY = 'stay';
@@ -24,11 +26,13 @@ const YES = 'yes';
 const JUST_Y = 'y';
 const NO = 'no';
 const JUST_N = 'n';
+const ACE = 'A';
 
-function gameWelcome() {
+function displayWelcomeMsg() {
   prompt('Welcome to Twenty One!');
   prompt(`The player closer to ${WINNING_NUMBER} wins.`);
-  prompt(`Ace: 1 or 11, Numbered cards: number on card, Face Cards: 10`);
+  prompt(`Ace: 1 or 11, Numbered cards: number on card, Face Cards: ${FACE_CARD_VALUE}`);
+  prompt(`First to ${MATCH_LIMIT} wins.`);
   prompt('Enjoy!!');
 }
 
@@ -36,7 +40,7 @@ function playerReady() {
   prompt('Are you ready?');
   while (true) {
     let ready = rl.question().toLowerCase();
-    if (ready === READY || ready === YES || ready === 'y') {
+    if ([READY, YES, JUST_Y].includes(ready)) {
       break;
     } else {
       prompt("Whenever you are ready type ready or (y)es.");
@@ -69,8 +73,8 @@ function total(cards) {
 
   let sum = 0;
   values.forEach(value => {
-    if (value === 'A') {
-      sum += 11;
+    if (value === ACE) {
+      sum += ACE_VALUE;
     } else if (['J', 'Q', 'K'].includes(value)) {
       sum += FACE_CARD_VALUE;
     } else {
@@ -79,7 +83,7 @@ function total(cards) {
   });
 
   // correct for Aces
-  values.filter(value => value === 'A').forEach(_ => {
+  values.filter(value => value === ACE).forEach(_ => {
     if (sum > WINNING_NUMBER) sum -= CORRECTION_FOR_ACE;
   });
 
@@ -118,7 +122,7 @@ function playerHitOrStay() {
 function dealerHitOrStay(dealerHand) {
   if (dealerHand.length === 0) {
     return HIT;
-  } else if (total(dealerHand) <= 17) {
+  } else if (total(dealerHand) <= DEALER_LIMIT) {
     return HIT;
   } else return STAY;
 }
@@ -256,12 +260,13 @@ function dealersTurn(dealerHand, fullDeck, dealerTotal) {
 function reachedMaxScore(SCORE_OBJ) {
   if (SCORE_OBJ.player === MATCH_LIMIT ||
     SCORE_OBJ.dealer === MATCH_LIMIT) return true;
+  return false;
 }
 
 // PLAY AGAIN LOOP
 while (true) {
   console.clear();
-  gameWelcome();
+  displayWelcomeMsg();
   const SCORE_OBJ = {player: 0, dealer: 0};
 
   while (true) {
