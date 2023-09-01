@@ -253,6 +253,11 @@ function dealersTurn(dealerHand, fullDeck, dealerTotal) {
   return dealerTotal;
 }
 
+function reachedMaxScore(SCORE_OBJ) {
+  if (SCORE_OBJ.player === MATCH_LIMIT ||
+    SCORE_OBJ.dealer === MATCH_LIMIT) return true;
+}
+
 // PLAY AGAIN LOOP
 while (true) {
   console.clear();
@@ -276,7 +281,7 @@ while (true) {
     if (busted(playerTotal)) {
       SCORE_OBJ.dealer += 1;
       prompt('YOU BUSTED!');
-      if (SCORE_OBJ.player === 3 || SCORE_OBJ.dealer === 3) break;
+      if (reachedMaxScore(SCORE_OBJ)) break;
       continue;
     }
     // DEALER'S TURN
@@ -289,7 +294,7 @@ while (true) {
     prompt(color.white.italic(detectWinner(playerTotal, dealerTotal)));
     incrementScore(detectWinner(playerTotal, dealerTotal), SCORE_OBJ);
 
-    if (SCORE_OBJ.player === 3 || SCORE_OBJ.dealer === 3) break;
+    if (reachedMaxScore(SCORE_OBJ)) break;
   }
   console.log(SMALL_DIVIDER);
   prompt(seriesWinner(SCORE_OBJ));
