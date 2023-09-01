@@ -102,7 +102,8 @@ function playerHitOrStay(playerTotal) {
   while (true) {
     prompt(`Would you like to ${color.brightBlue('(H)it')} or ${color.brightRed('(S)tay')}.`);
     let hitOrStay = rl.question().toLowerCase();
-    if (hitOrStay === STAY || hitOrStay === JUST_S || busted(playerTotal)) {
+    // if (busted(playerTotal)) return STAY;
+    if (hitOrStay === STAY || hitOrStay === JUST_S) {
       return STAY;
     } else if (hitOrStay === HIT || hitOrStay === JUST_H) {
       return HIT;
@@ -236,11 +237,17 @@ while (true) {
       console.log(LARGE_DIVIDER);
       prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);
       console.log(HEADER_DIVIDER);
+      if (busted(playerTotal)) break;
       let answer = playerHitOrStay(playerTotal);
       if (answer === HIT) {
         dealToPlayer(playerHand, fullDeck);
         removeCard(fullDeck);
-      } else if (answer === STAY || busted(playerTotal)) break;
+      } else if (answer === STAY) break;
+    }
+    if (busted(playerTotal)) {
+      SCORE_OBJ.dealer += 1;
+      prompt('YOU BUSTED!');
+      continue;
     }
     while (true) {
       // DEALER'S TURN
