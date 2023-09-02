@@ -36,7 +36,7 @@ function displayWelcomeMsg() {
   prompt('Enjoy!!');
 }
 
-function playerReady() {
+function playerReadyPrompt() {
   prompt('Are you ready?');
   while (true) {
     let ready = rl.question().toLowerCase();
@@ -218,20 +218,24 @@ function seriesWinner(score) {
   }
 }
 
-function playersTurn(playerTotal, playerHand, dealerHand,
-  SCORE_OBJ, fullDeck) {
+function playersTurn(
+  playerTotal, playerHand, dealerHand, scoreObj, fullDeck
+) {
   while (true) {
     // PLAYER'S TURN
     console.clear();
     playerTotal = total(playerHand);
 
-    console.log(`Best out of 5 wins! You: ${color.blue(SCORE_OBJ.player)} Dealer: ${color.green(SCORE_OBJ.dealer)}`);
+    console.log(`Best out of 5 wins! You: ${color.blue(scoreObj.player)} Dealer: ${color.green(scoreObj.dealer)}`);
     prompt(`This is your hand: ${color.brightBlue(cardValues(playerHand).join(', '))} current total: ${color.brightBlue(playerTotal)}`);
     console.log(LARGE_DIVIDER);
     prompt(`This is the dealers card: ${color.brightGreen(cardValues(dealerHand)[0])}`);
     console.log(HEADER_DIVIDER);
+
     if (busted(playerTotal)) break;
+
     let answer = playerHitOrStay(playerTotal);
+
     if (answer === HIT) {
       dealToPlayer(playerHand, fullDeck);
       removeCard(fullDeck);
@@ -244,7 +248,9 @@ function dealersTurn(dealerHand, fullDeck, dealerTotal) {
   while (true) {
     // DEALER'S TURN
     console.clear();
+
     let answer = dealerHitOrStay(dealerHand, fullDeck);
+
     if (answer === HIT) {
       dealToDealer(dealerHand, fullDeck);
       removeCard(fullDeck);
@@ -257,11 +263,27 @@ function dealersTurn(dealerHand, fullDeck, dealerTotal) {
   return dealerTotal;
 }
 
-function reachedMaxScore(SCORE_OBJ) {
-  if (SCORE_OBJ.player === MATCH_LIMIT ||
-    SCORE_OBJ.dealer === MATCH_LIMIT) return true;
+function reachedMaxScore(score, matchLimit) {
+  if (score.player === matchLimit ||
+    score.dealer === matchLimit) return true;
   return false;
 }
+
+// Player's turn
+// Dealer's turn
+// Reporting the game's outcome
+// Determining whether a player's score has reached the maximum
+// Reporting the series winner
+// Wrapping an individual round of a game into a function
+// Wrapping a "first to 3 wins" round into its own function
+
+// runGameRound(scoreObj)
+//   run by itself without scoreObj
+//   conditionally use scoreObj
+//   if it exists then you apply the score logic
+// runFirstTo3()
+//   declarations
+//   runGameRound(scoreObj, maxScore)
 
 // PLAY AGAIN LOOP
 while (true) {
@@ -277,7 +299,7 @@ while (true) {
     let dealerTotal = total(dealerHand);
 
     initialDeal(playerHand, dealerHand, fullDeck);
-    playerReady();
+    playerReadyPrompt();
     // GAME LOOP
     // PLAYER'S TURN
     playerTotal = playersTurn(playerTotal, playerHand, dealerHand,
@@ -286,7 +308,7 @@ while (true) {
     if (busted(playerTotal)) {
       SCORE_OBJ.dealer += 1;
       prompt('YOU BUSTED!');
-      if (reachedMaxScore(SCORE_OBJ)) break;
+      if (reachedMaxScore(SCORE_OBJ, MATCH_LIMIT)) break;
       continue;
     }
     // DEALER'S TURN
@@ -299,7 +321,7 @@ while (true) {
     prompt(color.white.italic(detectWinner(playerTotal, dealerTotal)));
     incrementScore(detectWinner(playerTotal, dealerTotal), SCORE_OBJ);
 
-    if (reachedMaxScore(SCORE_OBJ)) break;
+    if (reachedMaxScore(SCORE_OBJ, MATCH_LIMIT)) break;
   }
   console.log(SMALL_DIVIDER);
   prompt(seriesWinner(SCORE_OBJ));
